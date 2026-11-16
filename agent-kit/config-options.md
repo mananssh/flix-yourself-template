@@ -20,7 +20,7 @@ branding:
   tagline: string
   
 database:
-  provider: "postgresql" | "cockroachdb" | "planetscale" | "sqlite"
+  provider: "postgresql" | "cockroachdb" | "sqlite"
   url: string
   
 storage:
@@ -28,7 +28,7 @@ storage:
   # provider-specific options
   
 auth:
-  provider: "internal" | "nextauth" | "clerk" | "auth0" | "none"
+  provider: "internal" | "nextauth" | "none"
   # provider-specific options
   
 deployment:
@@ -92,12 +92,15 @@ database:
   url: "postgresql://user:pass@localhost:5432/flix"
 ```
 
-### Options
+### Database Options
 
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `provider` | `"postgresql"` \| `"cockroachdb"` \| `"planetscale"` \| `"sqlite"` | Yes | `"sqlite"` | Database provider |
-| `url` | `string` | Yes | - | Database connection URL |
+| Provider | Local | Hosted | Free Tier | Notes |
+|----------|-------|--------|-----------|-------|
+| **SQLite** | ✅ | ❌ | ✅ Always | File-based, zero config, perfect for dev |
+| **PostgreSQL** | ✅ | ✅ | ✅ Available | Supabase, Neon, Railway free tiers |
+| **CockroachDB** | ✅ | ✅ | ✅ Available | 10GB storage, 50M RUs/month free |
+
+**Recommendation:** SQLite (local dev) → CockroachDB free tier (production)
 
 ### Providers
 
@@ -146,32 +149,6 @@ datasource db {
 - Need global distribution
 - Want Postgres compatibility with auto-scaling
 - Using CockroachDB Serverless (free tier available)
-
-#### PlanetScale
-
-MySQL-compatible serverless database with branching.
-
-```yaml
-database:
-  provider: "planetscale"
-  url: "mysql://user:pass@aws.connect.psdb.cloud/flix?sslaccept=strict"
-```
-
-**Prisma datasource**:
-```prisma
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-  relationMode = "prisma"
-}
-```
-
-**Use when**:
-- Want serverless MySQL with generous free tier
-- Like git-style database branching
-- Need automatic backups and scaling
-
-**Note**: PlanetScale doesn't support foreign key constraints. Prisma handles relations in "prisma" relation mode.
 
 #### SQLite / Turso
 
@@ -223,6 +200,18 @@ storage:
     accessKeyId: "env:AWS_ACCESS_KEY_ID"
     secretAccessKey: "env:AWS_SECRET_ACCESS_KEY"
 ```
+
+### Storage Options
+
+| Provider | Local | Hosted | Free Tier | Notes |
+|----------|-------|--------|-----------|-------|
+| **Local filesystem** | ✅ | ❌ | ✅ Always | File-based storage, dev only |
+| **S3** | ❌ | ✅ | 🟡 Limited | 5GB free for 12 months (AWS new accounts) |
+| **R2** | ❌ | ✅ | ✅ Available | 10GB free forever (Cloudflare) |
+| **GCS** | ❌ | ✅ | ✅ Available | 5GB free forever (Google Cloud) |
+| **Azure Blob** | ❌ | ✅ | 🟡 Limited | Limited free tier (Azure) |
+
+**Recommendation:** Local (dev) → R2 or GCS (production)
 
 ### Options
 
@@ -355,11 +344,23 @@ auth:
     allowSignup: true
 ```
 
+### Auth Options
+
+| Provider | Local | Hosted | Free Tier | Notes |
+|----------|-------|--------|-----------|-------|
+| **None** | ✅ | ❌ | ✅ Always | Single-user, no login needed |
+| **Internal (bcrypt)** | ✅ | ❌ | ✅ Always | Cookie-based sessions, multi-user |
+| **NextAuth** | ✅ | ❌ | ✅ Always | OAuth with Google/GitHub, self-hosted |
+
+**All options are FREE and self-hosted.**
+
+**Recommendation:** None (personal use) or Internal (family/friends)
+
 ### Options
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `provider` | `"internal"` \| `"nextauth"` \| `"clerk"` \| `"auth0"` \| `"none"` | Yes | `"none"` | Auth provider |
+| `provider` | `"internal"` \| `"nextauth"` \| `"none"` | Yes | `"none"` | Auth provider |
 | Provider-specific fields | Various | Yes | - | See each provider below |
 
 ### Providers
@@ -420,57 +421,6 @@ auth:
 - Want flexibility and customization
 - Open-source preference
 
-#### Clerk
-
-Modern auth platform with great DX.
-
-```yaml
-auth:
-  provider: "clerk"
-  clerk:
-    publishableKey: "env:NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
-    secretKey: "env:CLERK_SECRET_KEY"
-```
-
-**Fields**:
-- `publishableKey`: Clerk publishable key (public, safe for client)
-- `secretKey`: Clerk secret key (server-only)
-
-**Use when**:
-- Want beautiful pre-built auth UI
-- Need user management dashboard
-- Prefer hosted solution
-- Free tier is sufficient (10k MAUs)
-
-**Provides**:
-- Social login (Google, GitHub, etc.)
-- Magic links
-- Multi-factor auth
-- User profiles
-
-#### Auth0
-
-Enterprise-grade auth platform.
-
-```yaml
-auth:
-  provider: "auth0"
-  auth0:
-    domain: "your-tenant.auth0.com"
-    clientId: "env:AUTH0_CLIENT_ID"
-    clientSecret: "env:AUTH0_CLIENT_SECRET"
-```
-
-**Fields**:
-- `domain`: Auth0 tenant domain
-- `clientId`: Auth0 application client ID
-- `clientSecret`: Auth0 application client secret
-
-**Use when**:
-- Enterprise requirements
-- Advanced features (passwordless, MFA, etc.)
-- Need Auth0-specific integrations
-
 #### None (Single-user / No auth)
 
 No authentication. **Minimal option**.
@@ -502,6 +452,18 @@ deployment:
     projectId: "prj_abc123"
     teamId: "team_xyz789"
 ```
+
+### Deployment Options
+
+| Target | Local | Hosted | Free Tier | Notes |
+|--------|-------|--------|-----------|-------|
+| **Local** | ✅ | ❌ | ✅ Always | Development server |
+| **Vercel** | ❌ | ✅ | ✅ Available | Hobby plan free |
+| **Netlify** | ❌ | ✅ | ✅ Available | Starter plan free |
+| **Cloudflare Pages** | ❌ | ✅ | ✅ Available | Free tier generous |
+| **Docker** | ✅ | ✅ | ✅ Always | Self-hosted (hosting costs may apply) |
+
+**Recommendation:** Vercel or Cloudflare Pages (easiest)
 
 ### Options
 
@@ -1030,10 +992,10 @@ storage:
     secretAccessKey: "env:R2_SECRET_ACCESS_KEY"
 
 auth:
-  provider: "clerk"
-  clerk:
-    publishableKey: "env:NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
-    secretKey: "env:CLERK_SECRET_KEY"
+  provider: "internal"
+  internal:
+    allowSignup: false
+    requireEmailVerification: true
 
 deployment:
   target: "vercel"
@@ -1060,7 +1022,7 @@ seedData: false
 - Production-ready
 - Managed PostgreSQL (e.g., Neon, Supabase)
 - Cloudflare R2 (zero egress fees for streaming)
-- Clerk auth (beautiful UI, free tier)
+- Internal auth with email verification
 - Deploys to Vercel
 - Optimized for couple use case
 
@@ -1146,9 +1108,9 @@ These four places must stay in sync (enforced in PR reviews).
 ## Summary
 
 - **Branding**: App name, tagline
-- **Database**: PostgreSQL, CockroachDB, PlanetScale, SQLite (via Prisma)
+- **Database**: PostgreSQL, CockroachDB, SQLite (via Prisma)
 - **Storage**: S3, GCS, R2, Azure, Local
-- **Auth**: Internal, NextAuth, Clerk, Auth0, None
+- **Auth**: Internal, NextAuth, None
 - **Deployment**: Vercel, Netlify, Cloudflare, Docker, Local
 - **Content Presets**: Couple, Gift, Family, Travel, Generic, Homework
 - **Features**: 9 toggleable features (continue watching, search, etc.)
