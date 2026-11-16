@@ -1,0 +1,200 @@
+// Prisma schema for Flix Yourself
+// Multi-provider support: SQLite, PostgreSQL, CockroachDB
+// Set DATABASE_PROVIDER in your .env file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = env("DATABASE_PROVIDER")
+  url      = env("DATABASE_URL")
+}
+
+enum MediaType {
+  MOVIE
+  SERIES
+  CLIP
+}
+
+enum ImageType {
+  POSTER
+  BACKDROP
+  THUMBNAIL
+}
+
+enum EpisodeImageType {
+  THUMBNAIL
+  STILL
+}
+
+enum PersonRole {
+  ACTOR
+  DIRECTOR
+  CREATOR
+}
+
+model Media {
+  id             String    @id @default(uuid())
+  title          String
+  type           MediaType
+  description    String?
+  releaseYear    Int?
+  durationSec    Int?
+  maturityRating String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  videos        MediaVideo[]
+  images        MediaImage[]
+  genres        MediaGenre[]
+  people        MediaPerson[]
+  episodes      Episode[]
+  watchlistedBy Watchlist[]
+  collections   MediaCollectionItem[]
+}
+
+model MediaVideo {
+  id        String   @id @default(uuid())
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   String
+  storagePath String // e.g., videos/movies/sample.mp4
+  container String   // mp4, mkv, webm, etc.
+  language  String?
+  sizeBytes BigInt?
+  createdAt DateTime @default(now())
+}
+
+model MediaImage {
+  id        String    @id @default(uuid())
+  media     Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   String
+  type      ImageType
+  storagePath String  // e.g., images/posters/sample.jpg
+  url       String?   // optional CDN/public URL
+  width     Int?
+  height    Int?
+  createdAt DateTime  @default(now())
+}
+
+model Episode {
+  id            String   @id @default(uuid())
+  media         Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId       String   // parent series media id
+  title         String
+  description   String?
+  episodeNumber Int
+  durationSec   Int?
+  releaseYear   Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  videos EpisodeVideo[]
+  images EpisodeImage[]
+
+  @@unique([mediaId, episodeNumber])
+}
+
+model EpisodeVideo {
+  id        String   @id @default(uuid())
+  episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  episodeId String
+  storagePath String // e.g., videos/series/episode-1.mp4
+  container String   // mp4, mkv, webm, etc.
+  language  String?
+  sizeBytes BigInt?
+  createdAt DateTime @default(now())
+}
+
+model EpisodeImage {
+  id        String           @id @default(uuid())
+  episode   Episode          @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  episodeId String
+  type      EpisodeImageType
+  storagePath String         // e.g., images/episodes/thumbnail.jpg
+  url       String?          // optional CDN/public URL
+  width     Int?
+  height    Int?
+  createdAt DateTime         @default(now())
+}
+
+model Genre {
+  id    String       @id @default(uuid())
+  name  String       @unique
+  media MediaGenre[]
+}
+
+model MediaGenre {
+  media   Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId String
+  genre   Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+  genreId String
+
+  @@id([mediaId, genreId])
+}
+
+model Person {
+  id    String        @id @default(uuid())
+  name  String
+  media MediaPerson[]
+}
+
+model MediaPerson {
+  media    Media      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId  String
+  person   Person     @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId String
+  role     PersonRole
+
+  @@id([mediaId, personId, role])
+}
+
+model MediaCollection {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items MediaCollectionItem[]
+}
+
+model MediaCollectionItem {
+  collection   MediaCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  collectionId String
+  media        Media           @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId      String
+  sortOrder    Int?
+
+  @@id([collectionId, mediaId])
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  password  String   // hashed password
+  createdAt DateTime @default(now())
+
+  watchlist Watchlist[]
+}
+
+model Watchlist {
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   String
+  createdAt DateTime @default(now())
+
+  @@id([userId, mediaId])
+}
+
+model Upload {
+  id          String   @id @default(uuid())
+  storagePath String   @unique // e.g., uploads/videos/file.mp4
+  fileName    String
+  contentType String
+  folder      String   // "images" or "videos"
+  sizeBytes   BigInt?
+  createdAt   DateTime @default(now())
+}
