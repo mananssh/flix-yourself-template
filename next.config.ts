@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "storage.googleapis.com",
       },
+      {
+        // Placeholder posters/backdrops used by the seed catalog (demo data).
+        protocol: "https",
+        hostname: "picsum.photos",
+      },
     ],
   },
 };
