@@ -21,7 +21,11 @@ Flix Yourself supports three database providers. Choose the one that best fits y
 
 ## Provider Options
 
-### 🗄️ SQLite (Recommended for Getting Started)
+### 🗄️ SQLite
+
+> ⚠️ **Not supported by the default schema.** The schema uses enums, which Prisma
+> does not support on SQLite. To use SQLite you would need to remove the enums
+> (replace them with string fields). Prefer **PostgreSQL** to get started.
 
 **Best for:** Local development, testing, demos, single-user deployments
 
@@ -154,32 +158,52 @@ npm run db:reset
 
 ## Switching Providers
 
-To switch database providers:
+The datasource **provider is a build-time choice**: Prisma does not allow
+`env()` in the `provider` field, so it is a static value in
+`prisma/schema.prisma`. (The `create-flix-yourself` CLI sets it for you at
+scaffold time.) Only the connection string (`DATABASE_URL`) is read at runtime.
+
+> **SQLite is not supported by the default schema** because it uses enums, which
+> Prisma does not support on SQLite. Use `postgresql` or `cockroachdb`.
+
+To switch providers manually:
 
 1. **Stop your app**
 
-2. **Update `.env`:**
-   ```bash
-   DATABASE_PROVIDER=postgresql  # or sqlite or cockroachdb
-   DATABASE_URL=your_new_connection_string
+2. **Edit `prisma/schema.prisma`** — set the static provider:
+   ```prisma
+   datasource db {
+     provider = "postgresql" // or "cockroachdb"
+     url      = env("DATABASE_URL")
+   }
    ```
 
-3. **Regenerate client:**
+3. **Update `.env`** with the matching connection string:
+   ```bash
+   DATABASE_URL=your_new_connection_string
+   ```
+   (`DATABASE_PROVIDER` is retained for config validation/tooling but is not
+   consumed by Prisma itself.)
+
+4. **Regenerate client:**
    ```bash
    npm run db:generate
    ```
 
-4. **Apply schema:**
+5. **Apply schema:**
    ```bash
    npm run db:push  # or db:migrate for production
    ```
 
 ## Troubleshooting
 
-### "Environment variable not found: DATABASE_PROVIDER"
-- Make sure `.env` file exists in project root
-- Check that `DATABASE_PROVIDER` is set
-- Restart your dev server after changes
+### "A datasource must not use the env() function in the provider argument" (P1012)
+- The `provider` in `prisma/schema.prisma` must be a static string (e.g.
+  `"postgresql"`), not `env(...)`. Set it directly and re-run `npm run db:generate`.
+
+### "Error validating: You defined the enum ... not supported on SQLite"
+- SQLite does not support enums. Use `provider = "postgresql"` (or
+  `"cockroachdb"`), or remove the enums from the schema.
 
 ### "Can't reach database server"
 - Verify DATABASE_URL is correct
