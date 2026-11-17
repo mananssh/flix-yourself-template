@@ -331,6 +331,23 @@ storage:
 - No CDN benefits
 - Manual backups
 
+### Environment Variables
+
+The storage seam is configured via environment variables (set `STORAGE_PROVIDER`,
+then the variables for that provider). Only the selected provider's variables are read.
+
+| Provider | Variables |
+|----------|-----------|
+| `local` | `STORAGE_LOCAL_PATH` (default `./uploads`), `STORAGE_LOCAL_BASE_URL` (default `/api/media/file`) |
+| `s3` | `STORAGE_S3_BUCKET`, `STORAGE_S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `STORAGE_S3_ENDPOINT` (opt), `STORAGE_S3_FORCE_PATH_STYLE` (opt) |
+| `r2` | `STORAGE_R2_ACCOUNT_ID`, `STORAGE_R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` |
+| `gcs` | `STORAGE_GCS_BUCKET`, `STORAGE_GCS_PROJECT_ID`, `STORAGE_GCS_KEY_FILE` (opt) |
+| `azure` | `STORAGE_AZURE_ACCOUNT_NAME`, `STORAGE_AZURE_ACCOUNT_KEY`, `STORAGE_AZURE_CONTAINER` |
+
+See `lib/storage/providers/README.md` for setup walkthroughs and
+`lib/storage/types.ts` for the provider interface. Implementation lives in
+`lib/storage/` and is validated by `storageConfigSchema` in `lib/config/schema.ts`.
+
 ---
 
 ## 4. Authentication
