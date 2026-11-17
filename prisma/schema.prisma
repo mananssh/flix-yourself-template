@@ -1,14 +1,23 @@
 // Prisma schema for Flix Yourself
-// Multi-provider support: SQLite, PostgreSQL, CockroachDB
-// Set DATABASE_PROVIDER in your .env file
+//
+// Prisma 7 driver-adapter model:
+//   - The datasource `provider` is a BUILD-TIME choice (a static string; Prisma
+//     does not allow env() here). The create-flix-yourself CLI sets it at scaffold
+//     time; to switch manually, edit it below and re-run `npm run db:generate`.
+//   - The connection URL is NOT declared here. It is supplied at runtime to the
+//     Prisma Client via a driver adapter (see lib/db/index.ts) and to the Prisma
+//     CLI/Migrate via prisma.config.ts — both read DATABASE_URL.
+//
+// Supported: "postgresql" | "cockroachdb".
+// NOTE: SQLite is NOT supported by this schema because it uses enums, which
+// Prisma does not support on SQLite.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = env("DATABASE_PROVIDER")
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
 }
 
 enum MediaType {
