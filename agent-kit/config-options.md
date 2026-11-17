@@ -455,6 +455,26 @@ auth:
 
 **Warning**: All content is public. Don't use in production with sensitive content.
 
+### Environment Variables
+
+The auth seam is configured via environment variables (set `AUTH_PROVIDER`, then
+the variables for that provider). Only the selected provider's variables are read.
+
+| Provider   | Variables |
+|------------|-----------|
+| `none`     | `AUTH_NONE_USER_ID` (opt, default `single-user`), `AUTH_NONE_USER_EMAIL` (opt), `AUTH_NONE_USER_NAME` (opt, default `Owner`) |
+| `internal` | `AUTH_SESSION_SECRET` (required, min 16 chars), `AUTH_ALLOW_SIGNUP` (opt, default `true`), `AUTH_REQUIRE_EMAIL_VERIFICATION` (opt, default `false`, reserved/not yet enforced), `AUTH_SESSION_MAX_AGE_DAYS` (opt, default `7`) |
+| `nextauth` | `NEXTAUTH_SECRET` (required), `NEXTAUTH_URL` (opt), `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` and/or `GITHUB_CLIENT_ID` + `GITHUB_CLIENT_SECRET` (at least one pair required) |
+
+See `lib/auth/providers/README.md` for setup walkthroughs and
+`lib/auth/types.ts` for the provider interface. Implementation lives in
+`lib/auth/` and is validated by `authConfigSchema` in `lib/config/schema.ts`.
+Route protection is handled by `middleware.ts`.
+
+> **Note:** `AUTH_REQUIRE_EMAIL_VERIFICATION` is validated but not yet enforced —
+> enforcement requires an `emailVerified` column on the `User` model, which the
+> default schema does not include.
+
 ---
 
 ## 5. Deployment
