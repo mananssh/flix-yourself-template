@@ -14,4 +14,9 @@ export default defineConfig({
   datasource: {
     url: process.env.DATABASE_URL,
   },
+  migrations: {
+    // `prisma db seed` runs this. Node executes the TypeScript seed directly via
+    // its built-in type stripping (Node >= 22.6), so no extra tooling is needed.
+    seed: 'node prisma/seed.ts',
+  },
 })
