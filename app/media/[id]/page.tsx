@@ -6,12 +6,14 @@ import { notFound } from 'next/navigation'
 import { CastList } from '@/components/catalog/detail/CastList'
 import { EpisodeList } from '@/components/catalog/detail/EpisodeList'
 import { PlaybackActions } from '@/components/catalog/detail/PlaybackActions'
+import type { PlayableSource } from '@/components/catalog/VideoPlayer'
 import { getCatalog, type MediaDetail } from '@/lib/catalog'
 import {
   formatDuration,
   formatEpisodeCount,
   MEDIA_TYPE_LABEL,
 } from '@/lib/format'
+import { getStorage } from '@/lib/storage'
 
 // Detail data is read from the database per request.
 export const dynamic = 'force-dynamic'
@@ -41,6 +43,45 @@ function MetaItem({ children }: { children: React.ReactNode }) {
   return <span className="whitespace-nowrap">{children}</span>
 }
 
+/**
+ * Resolve the playable sources for a title through the storage seam.
+ *
+ * A movie yields a single source; a series yields one per playable episode
+ * (in order), which the player treats as a playlist. URLs come from
+ * `getSignedUrl` — the local streaming route in dev, or a direct presigned
+ * cloud URL in production — so the player never needs provider knowledge.
+ */
+async function resolvePlayableSources(
+  media: MediaDetail,
+): Promise<PlayableSource[]> {
+  const storage = await getStorage()
+
+  if (media.type === 'SERIES') {
+    const sources: PlayableSource[] = []
+    for (const episode of media.episodes) {
+      const video = episode.videos[0]
+      if (!video) continue
+      sources.push({
+        id: episode.id,
+        title: episode.title,
+        subtitle: `${media.title} · Episode ${episode.episodeNumber}`,
+        url: await storage.getSignedUrl(video.storagePath),
+      })
+    }
+    return sources
+  }
+
+  const video = media.videos[0]
+  if (!video) return []
+  return [
+    {
+      id: media.id,
+      title: media.title,
+      url: await storage.getSignedUrl(video.storagePath),
+    },
+  ]
+}
+
 export default async function MediaDetailPage({
   params,
 }: {
@@ -54,9 +95,7 @@ export default async function MediaDetailPage({
   const duration = formatDuration(media.durationSec)
   const episodeCount = formatEpisodeCount(media.episodes.length)
   const isSeries = media.type === 'SERIES'
-  const canPlay = isSeries
-    ? media.episodes.some((episode) => episode.videos.length > 0)
-    : media.videos.length > 0
+  const playableSources = await resolvePlayableSources(media)
 
   // Build the bullet-separated meta row, omitting absent values.
   const metaItems = [
@@ -162,7 +201,7 @@ export default async function MediaDetailPage({
               )}
 
               <div className="mt-6">
-                <PlaybackActions canPlay={canPlay} />
+                <PlaybackActions sources={playableSources} />
               </div>
             </div>
           </div>

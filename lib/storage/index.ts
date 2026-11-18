@@ -3,9 +3,11 @@ import { validateStorageConfig, type StorageConfig } from '@/lib/config/schema'
 import type { StorageProvider } from './types'
 
 export type {
+  ByteRange,
   PutObjectOptions,
   SignedUrlOptions,
   StorageBody,
+  StorageObjectStat,
   StorageProvider,
   StorageProviderName,
 } from './types'

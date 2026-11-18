@@ -24,6 +24,23 @@ export interface SignedUrlOptions {
   expiresIn?: number;
 }
 
+/** Metadata about a stored object, returned by {@link StorageProvider.stat}. */
+export interface StorageObjectStat {
+  /** Total size of the object in bytes. */
+  size: number;
+  /** MIME type, when the backend records one. */
+  contentType?: string;
+}
+
+/**
+ * A half-open byte range `[start, end]` (both inclusive, 0-based), matching the
+ * semantics of an HTTP `Range: bytes=start-end` request.
+ */
+export interface ByteRange {
+  start: number;
+  end: number;
+}
+
 /**
  * Contract implemented by every storage backend.
  *
@@ -55,6 +72,25 @@ export interface StorageProvider {
    * is an app-served route.
    */
   getSignedUrl(key: string, options?: SignedUrlOptions): Promise<string>;
+
+  /**
+   * Optional capability: return an object's size (and content type, if known)
+   * without reading its bytes. Providers that can serve HTTP range requests
+   * implement this; callers must feature-detect it (`if (provider.stat)`).
+   */
+  stat?(key: string): Promise<StorageObjectStat>;
+
+  /**
+   * Optional capability: stream an object's bytes, or just the bytes in
+   * `range`, as a web {@link ReadableStream} — without buffering the whole
+   * object in memory. This is the efficient path for video delivery (seeking,
+   * partial downloads). Pair it with {@link stat} to answer HTTP range
+   * requests. Callers must feature-detect it (`if (provider.createReadStream)`).
+   */
+  createReadStream?(
+    key: string,
+    range?: ByteRange,
+  ): Promise<ReadableStream<Uint8Array>>;
 }
 
 /** Default expiry (seconds) for generated signed URLs. */

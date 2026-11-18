@@ -37,6 +37,18 @@ const POSTER_H = 600
 const BACKDROP_W = 1280
 const BACKDROP_H = 720
 
+/**
+ * Every title points at the one sample video committed under the local storage
+ * root (`uploads/samples/sample-video.mp4`), so the catalog plays end-to-end out
+ * of the box. The storage key is provider-agnostic: the local provider serves it
+ * via `/api/media/file/...`, and a cloud provider would serve the same key from
+ * its bucket. Replace this file (and swap in real per-title keys) to use your own
+ * media. Size is the real byte length of the committed sample.
+ */
+const SAMPLE_VIDEO_PATH = 'samples/sample-video.mp4'
+const SAMPLE_VIDEO_SIZE_BYTES = BigInt(1128375)
+const SAMPLE_VIDEO_CONTAINER = 'mp4'
+
 /** Deterministic placeholder poster/backdrop URLs keyed by a stable slug. */
 function posterUrl(slug: string): string {
   return `https://picsum.photos/seed/${slug}-poster/${POSTER_W}/${POSTER_H}`
@@ -330,6 +342,21 @@ const COLLECTIONS: Array<{
 /*                                   Seeding                                   */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * A single playable video rendition pointing at the committed sample. Shared by
+ * movies and episodes so every title plays out of the box.
+ */
+function sampleVideoCreate() {
+  return [
+    {
+      storagePath: SAMPLE_VIDEO_PATH,
+      container: SAMPLE_VIDEO_CONTAINER,
+      language: 'en',
+      sizeBytes: SAMPLE_VIDEO_SIZE_BYTES,
+    },
+  ]
+}
+
 /** Standard image + a single sample video for a media/episode, by slug. */
 function mediaImagesCreate(slug: string) {
   return [
@@ -401,15 +428,7 @@ async function main(): Promise<void> {
         durationSec: movie.durationSec,
         maturityRating: movie.maturityRating,
         images: { create: mediaImagesCreate(movie.slug) },
-        videos: {
-          create: [
-            {
-              storagePath: `videos/movies/${movie.slug}.mp4`,
-              container: 'mp4',
-              language: 'en',
-            },
-          ],
-        },
+        videos: { create: sampleVideoCreate() },
         genres: {
           create: movie.genres.map((g) => ({
             genre: { connect: { id: requireGenre(g) } },
@@ -454,15 +473,7 @@ async function main(): Promise<void> {
             episodeNumber: ep.episodeNumber,
             durationSec: ep.durationSec,
             releaseYear: ep.releaseYear,
-            videos: {
-              create: [
-                {
-                  storagePath: `videos/series/${series.slug}/ep-${ep.episodeNumber}.mp4`,
-                  container: 'mp4',
-                  language: 'en',
-                },
-              ],
-            },
+            videos: { create: sampleVideoCreate() },
             images: {
               create: [
                 {

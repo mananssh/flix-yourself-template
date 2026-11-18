@@ -28,3 +28,63 @@ body {
     Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/*
+ * Custom range inputs for the video player. The track is transparent by default
+ * so the seek bar's buffered/progress overlay shows through; `.player-range--track`
+ * adds a visible track for sliders without an overlay (volume).
+ */
+.player-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+.player-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: transparent;
+}
+.player-range::-moz-range-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: transparent;
+}
+.player-range--track::-webkit-slider-runnable-track {
+  background: rgba(255, 255, 255, 0.3);
+}
+.player-range--track::-moz-range-track {
+  background: rgba(255, 255, 255, 0.3);
+}
+.player-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 13px;
+  width: 13px;
+  margin-top: -4.5px;
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.6);
+  transition: transform 0.1s ease;
+}
+.player-range::-moz-range-thumb {
+  height: 13px;
+  width: 13px;
+  border: none;
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.6);
+}
+.player-range:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+.player-range:focus-visible {
+  outline: none;
+}
+.player-range:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.player-range:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}

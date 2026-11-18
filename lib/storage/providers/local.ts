@@ -1,9 +1,15 @@
-import { promises as fs } from 'node:fs'
+import { createReadStream, promises as fs } from 'node:fs'
 import path from 'node:path'
+import { Readable } from 'node:stream'
 
 import type { LocalStorageConfig } from '@/lib/config/schema'
 
-import type { StorageBody, StorageProvider } from '../types'
+import type {
+  ByteRange,
+  StorageBody,
+  StorageObjectStat,
+  StorageProvider,
+} from '../types'
 
 /**
  * Local filesystem storage provider.
@@ -75,5 +81,29 @@ export class LocalStorageProvider implements StorageProvider {
   async getSignedUrl(key: string): Promise<string> {
     const encoded = key.split('/').map(encodeURIComponent).join('/')
     return `${this.baseUrl}/${encoded}`
+  }
+
+  /** Return an object's size without reading its bytes. */
+  async stat(key: string): Promise<StorageObjectStat> {
+    const stats = await fs.stat(this.resolveKey(key))
+    return { size: stats.size }
+  }
+
+  /**
+   * Stream an object (or a byte range of it) straight off disk as a web
+   * {@link ReadableStream}, so the serving route can satisfy HTTP range
+   * requests without buffering the whole file in memory.
+   */
+  async createReadStream(
+    key: string,
+    range?: ByteRange,
+  ): Promise<ReadableStream<Uint8Array>> {
+    const full = this.resolveKey(key)
+    const nodeStream = createReadStream(
+      full,
+      range ? { start: range.start, end: range.end } : undefined,
+    )
+    // Readable.toWeb yields a ReadableStream<Uint8Array> for a byte stream.
+    return Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>
   }
 }
