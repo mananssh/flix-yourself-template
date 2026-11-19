@@ -13,7 +13,7 @@
  */
 
 import { Search, X } from 'lucide-react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useCallback } from 'react'
 
 import { SearchDropdown } from './SearchDropdown'
@@ -21,10 +21,8 @@ import type { SearchResult } from '@/lib/search'
 
 export function SearchBar() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   
-  // Initialize from URL query param if present
-  const [query, setQuery] = useState(searchParams.get('q') ?? '')
+  const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState(query)
   const [results, setResults] = useState<SearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -32,7 +30,7 @@ export function SearchBar() {
   const [selectedIndex, setSelectedIndex] = useState(-1)
   
   const inputRef = useRef<HTMLInputElement>(null)
-  const debounceTimerRef = useRef<NodeJS.Timeout>()
+  const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   // Debounce the query
   useEffect(() => {
