@@ -29,6 +29,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 export interface PlayableSource {
   /** Stable id (media or episode id) — also the resume-position key. */
   id: string
+  /** Media ID - for tracking in watchlist */
+  mediaId: string
+  /** Episode ID - for tracking in watchlist (null for movies) */
+  episodeId?: string
   /** Primary label, e.g. the movie or episode title. */
   title: string
   /** Secondary label, e.g. "Episode 2" or the series name. */
@@ -70,11 +74,43 @@ function readSavedPosition(id: string): number {
   }
 }
 
-function savePosition(id: string, seconds: number): void {
+function savePosition(
+  id: string,
+  seconds: number,
+  source?: { mediaId: string; episodeId?: string },
+): void {
   try {
     localStorage.setItem(progressStorageKey(id), String(Math.floor(seconds)))
+    // Sync to server (fire-and-forget)
+    if (source) {
+      syncProgressToServer(source.mediaId, seconds, source.episodeId).catch(
+        () => {
+          // Silently ignore sync errors - localStorage backup still works
+        },
+      )
+    }
   } catch {
     // Storage may be unavailable (private mode, blocked) — resume is best-effort.
+  }
+}
+
+async function syncProgressToServer(
+  mediaId: string,
+  progressSeconds: number,
+  episodeId?: string,
+): Promise<void> {
+  const response = await fetch('/api/watchlist', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mediaId,
+      episodeId: episodeId ?? null,
+      progressSeconds: Math.floor(progressSeconds),
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to sync progress')
   }
 }
 
@@ -223,7 +259,10 @@ export function VideoPlayer({ sources, startIndex = 0, onClose }: VideoPlayerPro
         Number.isFinite(video.duration) &&
         video.currentTime > RESUME_MIN_SECONDS
       ) {
-        savePosition(source.id, video.currentTime)
+        savePosition(source.id, video.currentTime, {
+          mediaId: source.mediaId,
+          episodeId: source.episodeId,
+        })
       }
       // Reset per-source UI for the incoming source (the <video> remounts via
       // its `key`). Done here rather than in an effect to avoid cascading
@@ -357,7 +396,10 @@ export function VideoPlayer({ sources, startIndex = 0, onClose }: VideoPlayerPro
     setCurrent(video.currentTime)
     // Throttle persistence to whole-second boundaries.
     if (source && Math.floor(video.currentTime) % 5 === 0) {
-      savePosition(source.id, video.currentTime)
+      savePosition(source.id, video.currentTime, {
+        mediaId: source.mediaId,
+        episodeId: source.episodeId,
+      })
     }
   }, [source])
 
@@ -427,7 +469,10 @@ export function VideoPlayer({ sources, startIndex = 0, onClose }: VideoPlayerPro
           setIsPlaying(false)
           const video = videoRef.current
           if (video && source && video.currentTime > RESUME_MIN_SECONDS && !video.ended) {
-            savePosition(source.id, video.currentTime)
+            savePosition(source.id, video.currentTime, {
+          mediaId: source.mediaId,
+          episodeId: source.episodeId,
+        })
           }
         }}
         onVolumeChange={() => {

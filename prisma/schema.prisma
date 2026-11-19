@@ -98,8 +98,9 @@ model Episode {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  videos EpisodeVideo[]
-  images EpisodeImage[]
+  videos    EpisodeVideo[]
+  images    EpisodeImage[]
+  watchlist Watchlist[]
 
   @@unique([mediaId, episodeNumber])
 }
@@ -189,11 +190,15 @@ model User {
 }
 
 model Watchlist {
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  mediaId   String
-  createdAt DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  media          Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId        String
+  episode        Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  episodeId      String?
+  progressSeconds Int     @default(0) // seconds watched
+  lastWatchedAt  DateTime @default(now())
+  createdAt      DateTime @default(now())
 
   @@id([userId, mediaId])
 }
