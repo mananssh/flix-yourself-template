@@ -42,11 +42,89 @@ function PlusIcon() {
   )
 }
 
-export function PlaybackActions({ sources }: { sources: PlayableSource[] }) {
+function CheckIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  )
+}
+
+export function PlaybackActions({ 
+  sources, 
+  mediaId 
+}: { 
+  sources: PlayableSource[]
+  mediaId: string 
+}) {
   const canPlay = sources.length > 0
   const [open, setOpen] = useState(false)
+  const [isInWatchlist, setIsInWatchlist] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isToggling, setIsToggling] = useState(false)
 
   const close = useCallback(() => setOpen(false), [])
+
+  // Check if media is in watchlist on mount
+  useEffect(() => {
+    async function checkWatchlist() {
+      try {
+        const response = await fetch(`/api/watchlist/check?mediaId=${mediaId}`)
+        if (response.ok) {
+          const data = await response.json()
+          setIsInWatchlist(data.inWatchlist)
+        }
+      } catch (error) {
+        console.error('Failed to check watchlist:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    checkWatchlist()
+  }, [mediaId])
+
+  // Toggle watchlist status
+  async function toggleWatchlist() {
+    if (isToggling) return
+
+    setIsToggling(true)
+    // Optimistic update
+    const previousState = isInWatchlist
+    setIsInWatchlist(!previousState)
+
+    try {
+      const endpoint = previousState
+        ? '/api/watchlist/remove'
+        : '/api/watchlist/add'
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mediaId }),
+      })
+
+      if (!response.ok) {
+        // Revert on error
+        setIsInWatchlist(previousState)
+        console.error('Failed to update watchlist')
+      }
+    } catch (error) {
+      // Revert on error
+      setIsInWatchlist(previousState)
+      console.error('Failed to update watchlist:', error)
+    } finally {
+      setIsToggling(false)
+    }
+  }
 
   // Lock background scroll while the player is open.
   useEffect(() => {
@@ -72,10 +150,19 @@ export function PlaybackActions({ sources }: { sources: PlayableSource[] }) {
         </button>
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded-md bg-white/15 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/25"
+          onClick={toggleWatchlist}
+          disabled={isLoading || isToggling}
+          className="inline-flex items-center gap-2 rounded-md bg-white/15 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label={isInWatchlist ? 'Remove from My List' : 'Add to My List'}
         >
-          <PlusIcon />
-          My List
+          {isLoading ? (
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+          ) : isInWatchlist ? (
+            <CheckIcon />
+          ) : (
+            <PlusIcon />
+          )}
+          {isInWatchlist ? 'In My List' : 'My List'}
         </button>
       </div>
 

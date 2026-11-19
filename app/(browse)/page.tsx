@@ -43,26 +43,46 @@ export default async function BrowsePage({
           <h1 className="text-2xl font-extrabold tracking-tight">
             <span className="text-accent">FLIX</span> YOURSELF
           </h1>
-          <nav className="flex gap-2" aria-label="Filter by type">
-            {FILTERS.map((filter) => {
-              const isActive = filter.type === activeType
-              const href = filter.type ? `/?type=${filter.type.toLowerCase()}` : '/'
-              return (
-                <Link
-                  key={filter.label}
-                  href={href}
-                  className={
-                    'rounded-full px-4 py-1.5 text-sm font-medium transition-colors ' +
-                    (isActive
-                      ? 'bg-white text-black'
-                      : 'bg-white/10 text-white/80 hover:bg-white/20')
-                  }
-                >
-                  {filter.label}
-                </Link>
-              )
-            })}
-          </nav>
+          <div className="flex flex-wrap items-center gap-3">
+            <nav className="flex gap-2" aria-label="Filter by type">
+              {FILTERS.map((filter) => {
+                const isActive = filter.type === activeType
+                const href = filter.type ? `/?type=${filter.type.toLowerCase()}` : '/'
+                return (
+                  <Link
+                    key={filter.label}
+                    href={href}
+                    className={
+                      'rounded-full px-4 py-1.5 text-sm font-medium transition-colors ' +
+                      (isActive
+                        ? 'bg-white text-black'
+                        : 'bg-white/10 text-white/80 hover:bg-white/20')
+                    }
+                  >
+                    {filter.label}
+                  </Link>
+                )
+              })}
+            </nav>
+            <Link
+              href="/watchlist"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/20"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+              My List
+            </Link>
+          </div>
         </div>
         
         {/* Search Bar */}

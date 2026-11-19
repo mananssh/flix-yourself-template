@@ -204,7 +204,7 @@ export default async function MediaDetailPage({
               )}
 
               <div className="mt-6">
-                <PlaybackActions sources={playableSources} />
+                <PlaybackActions sources={playableSources} mediaId={media.id} />
               </div>
             </div>
           </div>
