@@ -65,6 +65,24 @@ export default async function BrowsePage({
               })}
             </nav>
             <Link
+              href="/collections"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/20"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+              </svg>
+              Collections
+            </Link>
+            <Link
               href="/watchlist"
               className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/20"
             >
