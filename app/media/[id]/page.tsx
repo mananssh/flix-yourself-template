@@ -63,6 +63,8 @@ async function resolvePlayableSources(
       if (!video) continue
       sources.push({
         id: episode.id,
+        mediaId: media.id,
+        episodeId: episode.id,
         title: episode.title,
         subtitle: `${media.title} · Episode ${episode.episodeNumber}`,
         url: await storage.getSignedUrl(video.storagePath),
@@ -76,6 +78,7 @@ async function resolvePlayableSources(
   return [
     {
       id: media.id,
+      mediaId: media.id,
       title: media.title,
       url: await storage.getSignedUrl(video.storagePath),
     },

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 
+import { ContinueWatchingRow } from '@/components/catalog/ContinueWatchingRow'
 import { MediaGrid } from '@/components/catalog/MediaGrid'
 import { getCatalog, type MediaFilters } from '@/lib/catalog'
 
@@ -61,6 +62,8 @@ export default async function BrowsePage({
           })}
         </nav>
       </header>
+
+      <ContinueWatchingRow />
 
       <section>
         <h2 className="mb-4 text-lg font-semibold text-white/90">
