@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Claude worktrees node_modules
+.claude/worktrees/*/node_modules/
+.claude/worktrees/**/node_modules/
