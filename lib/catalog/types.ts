@@ -125,6 +125,8 @@ export interface CollectionSummary {
   description: string | null
   /** Number of media items in the collection. */
   itemCount: number
+  /** First few items for preview thumbnails (optional). */
+  previewItems?: Array<{ posterUrl: string | null }>
 }
 
 /** A collection together with its ordered media items. */

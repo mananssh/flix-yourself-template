@@ -221,11 +221,26 @@ export class PrismaCatalogService implements CatalogService {
 
   async getCollections(): Promise<CollectionSummary[]> {
     const collections = await prisma.mediaCollection.findMany({
-      include: { _count: { select: { items: true } } },
+      include: {
+        _count: { select: { items: true } },
+        items: {
+          take: 4,
+          include: { media: { include: { images: { where: { type: 'POSTER' } } } } },
+          orderBy: [
+            { sortOrder: { sort: 'asc', nulls: 'last' } },
+            { media: { title: 'asc' } },
+          ],
+        },
+      },
       orderBy: { name: 'asc' },
     })
 
-    return collections.map(toCollectionSummary)
+    return collections.map((collection) => ({
+      ...toCollectionSummary(collection),
+      previewItems: collection.items.map((item) => ({
+        posterUrl: resolveImageUrl(item.media.images, 'POSTER'),
+      })),
+    }))
   }
 
   async getMediaByCollection(
