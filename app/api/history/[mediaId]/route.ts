@@ -9,7 +9,7 @@ import { removeFromHistory } from '@/lib/history'
  */
 export async function DELETE(
   _request: Request,
-  { params }: { params: { mediaId: string } },
+  { params }: { params: Promise<{ mediaId: string }> },
 ) {
   try {
     const user = await getCurrentUser()
@@ -17,7 +17,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { mediaId } = params
+    const { mediaId } = await params
 
     if (!mediaId) {
       return NextResponse.json(
