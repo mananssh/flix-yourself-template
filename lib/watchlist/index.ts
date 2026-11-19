@@ -3,6 +3,7 @@
  */
 
 import { prisma } from '@/lib/db'
+import type { MediaSummary } from '@/lib/catalog'
 import type { MediaType } from '@prisma/client'
 
 export interface WatchlistItem {
@@ -139,4 +140,114 @@ export async function updateProgress({
       lastWatchedAt: new Date(),
     },
   })
+}
+
+/**
+ * Add media to user's watchlist ("My List").
+ * Creates a watchlist entry with zero progress if it doesn't exist.
+ */
+export async function addToWatchlist(
+  userId: string,
+  mediaId: string,
+): Promise<void> {
+  await prisma.watchlist.upsert({
+    where: {
+      userId_mediaId: {
+        userId,
+        mediaId,
+      },
+    },
+    update: {
+      // Already exists, do nothing (idempotent)
+    },
+    create: {
+      userId,
+      mediaId,
+      episodeId: null,
+      progressSeconds: 0,
+      lastWatchedAt: new Date(),
+    },
+  })
+}
+
+/**
+ * Remove media from user's watchlist ("My List").
+ */
+export async function removeFromWatchlist(
+  userId: string,
+  mediaId: string,
+): Promise<void> {
+  await prisma.watchlist.delete({
+    where: {
+      userId_mediaId: {
+        userId,
+        mediaId,
+      },
+    },
+  }).catch(() => {
+    // Ignore if not found (idempotent)
+  })
+}
+
+/**
+ * Check if media is in user's watchlist.
+ */
+export async function isInWatchlist(
+  userId: string,
+  mediaId: string,
+): Promise<boolean> {
+  const item = await prisma.watchlist.findUnique({
+    where: {
+      userId_mediaId: {
+        userId,
+        mediaId,
+      },
+    },
+  })
+  return item !== null
+}
+
+/**
+ * Get all items in user's watchlist ("My List").
+ * Returns items ordered by when they were added (most recent first).
+ */
+export async function getWatchlist(userId: string): Promise<MediaSummary[]> {
+  const items = await prisma.watchlist.findMany({
+    where: {
+      userId,
+    },
+    include: {
+      media: {
+        include: {
+          images: {
+            where: { type: 'POSTER' },
+            take: 1,
+          },
+          genres: {
+            include: {
+              genre: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  })
+
+  return items.map((item) => ({
+    id: item.media.id,
+    title: item.media.title,
+    type: item.media.type,
+    releaseYear: item.media.releaseYear,
+    posterUrl: item.media.images[0]?.url ?? null,
+    backdropUrl: null, // Not needed for watchlist cards
+    durationSec: item.media.durationSec,
+    maturityRating: item.media.maturityRating,
+    genres: item.media.genres.map((mg) => ({
+      id: mg.genre.id,
+      name: mg.genre.name,
+    })),
+  }))
 }
